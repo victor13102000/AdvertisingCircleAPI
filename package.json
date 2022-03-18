@@ -1,0 +1,20 @@
+{
+  "name": "adpolygon-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/kevinladelfa/adpolygon-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/kevinladelfa/adpolygon-api/issues"
+  },
+  "homepage": "https://gitlab.com/kevinladelfa/adpolygon-api#readme"
+}
