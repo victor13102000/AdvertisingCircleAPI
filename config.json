@@ -1,0 +1,6 @@
+{
+    "port": 3005,
+    "database": {
+        "url": "mongodb+srv://adpolygon:W8SQRzANdZ96m39C@clusterby.90qs9.mongodb.net/adpolygon?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
+    }
+}
