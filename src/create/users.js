@@ -34,7 +34,7 @@ async function runUser(req, res, databaseConnection) {
 }
 
 async function updateUser(req, res, databaseConnection) {
-  const username = "username";
+  const username = req.body.username;
   const {
     firstName,
     lastName,
