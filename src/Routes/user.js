@@ -1,25 +1,21 @@
- const express = require("express"); 
- const users = express.Router() 
+const express = require("express");
+const users = express.Router();
+const createUser = require("../create/users");
+const database = require("../database.js");
+global.config = require("../../config.json");
 
- const database = require('../database');
-/*  export default async (req, res) => {
-  if (req.method === "POST") {
-    const { db } = await connectToDatabase();
-    const data = req.body;
-    const resp = await db.collection("collectionName").insertOne(data);
-    res.status(200).send(resp);
-  }
-}; 
- */
- users.post("/", async (req, res) => {
-  try {
-    const { db } = await database.getConnection(global.config.database.url);
-    const data = req.body;
-    const response = await db.collection("users").insertOne(data);
-    res.status(200).send(response);
-  } catch (err) {
-    console.log(err);
-  }
-}); 
+(async () => {
+  const databaseConnection = await database.getConnection(
+    global.config.database.url
+  );
 
-module.exports= users
+  users.post("/create", (req, res) => {
+    createUser.runUser(req, res, databaseConnection);
+  });
+
+  users.put("/update", (req, res) => {
+    createUser.updateUser(req, res, databaseConnection);
+  });
+})();
+
+module.exports = users;

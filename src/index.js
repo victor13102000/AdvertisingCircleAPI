@@ -4,16 +4,7 @@ const database = require("./database.js");
 
 const express = require("express");
 const cors = require("cors");
-
-const createCampaign = require("./create/campaign");
-const res = require("express/lib/response");
-const createUser = require("./create/users");
-
-(async () => {
-  const databaseConnection = await database.getConnection(
-    global.config.database.url
-  );
-
+const routes = require('./Routes')
   const app = express();
   app.use(express.json());
   app.use(
@@ -21,15 +12,7 @@ const createUser = require("./create/users");
       origin: "*",
     })
   );
-
-  app.post("/create/campaign", (req, res) => {
-    createCampaign.run(req, res, databaseConnection);
-  });
-  app.post("/create/user", (req, res) => {
-    createUser.runUser(req, res, databaseConnection);
-  });
-
+  app.use('/', routes)
   app.listen(global.config.port, () =>
     console.log("SERVER UP | Port: " + global.config.port)
   );
-})();
