@@ -42,9 +42,3 @@ async function run(req, res, databaseConnection) {
     }
 
 }
-
-module.exports = {
-
-    "run": run
-
-}
