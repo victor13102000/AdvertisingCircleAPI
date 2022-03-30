@@ -2,7 +2,7 @@ async function run(req, res, databaseConnection) {
 
     const body = req.body;
 
-    const advertiser = username; //username obtenido del token
+    const advertiser ='565564654'; //username obtenido del token
 
     const name = body.name;
     const description = body.description;
@@ -40,5 +40,10 @@ async function run(req, res, databaseConnection) {
         });
 
     }
+
+}
+module.exports = {
+
+    "run": run
 
 }
