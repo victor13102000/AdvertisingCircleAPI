@@ -17,7 +17,7 @@ global.config = require("../../config.json");
     createUser.updateUser(req, res, databaseConnection);
   });
 
-  users.get("/data", (req, res) => {
+  users.post("/data", (req, res) => {
     createUser.dataUser(req, res, databaseConnection);
   });
 

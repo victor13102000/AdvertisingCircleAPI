@@ -1,3 +1,13 @@
+const axios = require("axios");
+const https = require("https");
+
+axios.default.httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+})
+
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+
+
 async function runUser(req, res, databaseConnection) {
   const body = req.body;
 
@@ -74,16 +84,41 @@ async function updateUser(req, res, databaseConnection) {
   });
 }
 
-async function dataUser(req, res, databaseConnection){
-  const user= req.body.username;
-  const usersCollection = databaseConnection.db("adpolygon").collection("users");
- const data= await usersCollection.findOne({"username":user})
-  res.status(200).json({
-    success: true,
-    message: "Informacion extraida correctamente",
-    data: data
-  });
-}
+ async function dataUser(req, res, databaseConnection) {
+   try {
+     const token = req.body.token;
+     
+   const config = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
+  const bodyParameters = {
+    "Content-Type": "application/json",
+  };
+  const prueba = await axios.post("https://accounts.clusterby.com/auth", bodyParameters, config);
+   
+  const username= prueba.data.username
+  const usersCollection = databaseConnection
+   .db("adpolygon")
+   .collection("users");
+ const data = await usersCollection.findOne({ username: username  });
+ if (data === null) {
+   res.status(404).json({
+     success: false,
+     message: "User not found",
+   });
+ } else {
+   res.status(200).json({
+     success: true,
+     message: "User OK",
+     data: data,
+   });
+ }   
+
+ } catch (error) {
+   console.log('algo salio mal', error)
+ }
+
+} 
 
 module.exports = {
   runUser: runUser,
