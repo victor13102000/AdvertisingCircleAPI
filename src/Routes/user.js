@@ -16,6 +16,11 @@ global.config = require("../../config.json");
   users.put("/update", (req, res) => {
     createUser.updateUser(req, res, databaseConnection);
   });
+
+  users.post("/data", (req, res) => {
+    createUser.dataUser(req, res, databaseConnection);
+  });
+
 })();
 
 module.exports = users;

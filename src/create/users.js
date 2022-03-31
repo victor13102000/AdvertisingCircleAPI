@@ -1,80 +1,178 @@
+const axios = require("axios");
+const https = require("https");
+
+axios.default.httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+
 async function runUser(req, res, databaseConnection) {
-  const body = req.body;
+  try {
+    const body = req.body;
 
-  const username = body.username; //token del user
-  const type = body.type;
-  const data = {
-    firstName: body.firstName,
-    lastName: body.lastName,
-    language: body.language,
-    gender: body.gender,
-    age: body.age,
-    instagram: body.instagram,
-    tikTok: body.tikTok,
-    youtube: body.youtube,
-    twitter: body.twitter,
-  };
+    const token = req.body.token;
 
-  const user = {
-    username: username,
-    type: type,
-    data: data,
-  };
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-  const usersCollection = databaseConnection
-    .db("adpolygon")
-    .collection("users");
+    const username = prueba.data.username;
 
-  await usersCollection.insertOne(user);
+    const type = body.type;
+    const data = {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      language: body.language,
+      gender: body.gender,
+      age: body.age,
+      instagram: body.instagram,
+      tikTok: body.tikTok,
+      youtube: body.youtube,
+      twitter: body.twitter,
+    };
 
-  res.status(200).json({
-    success: true,
-    message: "User creado correctamente.",
-  });
+    const user = {
+      username: username,
+      type: type,
+      data: data,
+    };
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    await usersCollection.insertOne(user);
+
+    if (!username) {
+      res.status(404).json({
+        success: false,
+        message: "User undefined",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "User creado correctamente.",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function updateUser(req, res, databaseConnection) {
-  const username = req.body.username;
-  const {
-    firstName,
-    lastName,
-    language,
-    gender,
-    age,
-    instagram,
-    tikTok,
-    youtube,
-    twitter,
-  } = req.body;
+  try {
+    const token = req.body.token;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-  const usersCollection = databaseConnection
-    .db("adpolygon")
-    .collection("users");
+    const username = prueba.data.username;
+    const {
+      firstName,
+      lastName,
+      language,
+      gender,
+      age,
+      instagram,
+      tikTok,
+      youtube,
+      twitter,
+    } = req.body;
 
-  await usersCollection.updateOne(
-    { username },
-    {
-      $set: {
-        "data.firstName": firstName,
-        "data.lastName": lastName,
-        "data.language": language,
-        "data.gender": gender,
-        "data.age": age,
-        "data.instagram": instagram,
-        "data.tikTok": tikTok,
-        "data.youtube": youtube,
-        "data.twitter": twitter,
-      },
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    await usersCollection.updateOne(
+      { username },
+      {
+        $set: {
+          "data.firstName": firstName,
+          "data.lastName": lastName,
+          "data.language": language,
+          "data.gender": gender,
+          "data.age": age,
+          "data.instagram": instagram,
+          "data.tikTok": tikTok,
+          "data.youtube": youtube,
+          "data.twitter": twitter,
+        },
+      }
+    );
+
+    if (!username) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Data cargada correctamente.",
+      });
     }
-  );
+  } catch (err) {
+    console.log(err);
+  }
+}
 
-  res.status(200).json({
-    success: true,
-    message: "Data cargada correctamente.",
-  });
+async function dataUser(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const username = prueba.data.username;
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+    const data = await usersCollection.findOne({ username: username });
+    if (data === null) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "User OK",
+        data: data,
+      });
+    }
+  } catch (error) {
+    console.log( error);
+  }
 }
 
 module.exports = {
   runUser: runUser,
   updateUser: updateUser,
+  dataUser: dataUser,
 };
