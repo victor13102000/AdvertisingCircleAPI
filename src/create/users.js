@@ -74,7 +74,19 @@ async function updateUser(req, res, databaseConnection) {
   });
 }
 
+async function dataUser(req, res, databaseConnection){
+  const user= req.body.username;
+  const usersCollection = databaseConnection.db("adpolygon").collection("users");
+ const data= await usersCollection.findOne({"username":user})
+  res.status(200).json({
+    success: true,
+    message: "Informacion extraida correctamente",
+    data: data
+  });
+}
+
 module.exports = {
   runUser: runUser,
   updateUser: updateUser,
+  dataUser:dataUser
 };
