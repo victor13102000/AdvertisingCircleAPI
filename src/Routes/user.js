@@ -13,6 +13,10 @@ global.config = require("../../config.json");
     createUser.runUser(req, res, databaseConnection);
   });
 
+  users.put("/update/type", (req, res) => {
+    createUser.updateUserType(req, res, databaseConnection);
+  });
+
   users.put("/update", (req, res) => {
     createUser.updateUser(req, res, databaseConnection);
   });

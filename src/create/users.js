@@ -50,9 +50,11 @@ async function runUser(req, res, databaseConnection) {
       .db("adpolygon")
       .collection("users");
 
-    await usersCollection.insertOne(user);
+    const usuarioExistente = await usersCollection.findOne({ username: username });
 
-    if (!username) {
+    if(!usuarioExistente) {
+      await usersCollection.insertOne(user)
+      if (!username) {
       res.status(404).json({
         success: false,
         message: "User undefined",
@@ -61,8 +63,59 @@ async function runUser(req, res, databaseConnection) {
       res.status(200).json({
         success: true,
         message: "User creado correctamente.",
+        user:user
       });
     }
+  }else{
+    res.status(200).json({
+      succes:true,
+      message: "login correcto",
+      user: usuarioExistente
+    })
+    
+  }
+    
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+
+async function updateUserType(req, res, databaseConnection) {
+  try {
+    const tipo = req.body.type
+    const token = req.body.token;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const username = prueba.data.username;
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+      await usersCollection.updateOne(
+        { username },
+        {
+          $set: {
+            "type":tipo
+          }
+        }
+      );
+
+      res.status(200).json({
+        message: "Datos cargados",
+        succes: true
+      })
+    
   } catch (err) {
     console.log(err);
   }
@@ -94,7 +147,7 @@ async function updateUser(req, res, databaseConnection) {
       tikTok,
       youtube,
       twitter,
-    } = req.body;
+    } = req.body.data;
 
     const usersCollection = databaseConnection
       .db("adpolygon")
@@ -174,5 +227,6 @@ async function dataUser(req, res, databaseConnection) {
 module.exports = {
   runUser: runUser,
   updateUser: updateUser,
-  dataUser: dataUser,
+  updateUserType: updateUserType,
+  dataUser: dataUser
 };
