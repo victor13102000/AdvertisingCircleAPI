@@ -51,7 +51,6 @@ async function runUser(req, res, databaseConnection) {
       .collection("users");
 
     const usuarioExistente = await usersCollection.findOne({ username: username });
-    console.log(usuarioExistente)
 
     if(!usuarioExistente) {
       await usersCollection.insertOne(user)
@@ -80,6 +79,7 @@ async function runUser(req, res, databaseConnection) {
     console.log(err);
   }
 }
+
 
 async function updateUserType(req, res, databaseConnection) {
   try {
@@ -157,23 +157,30 @@ async function updateUser(req, res, databaseConnection) {
       { username },
       {
         $set: {
-          "data.firstName": firstName != '' && firstName ,
-          "data.lastName": lastName !='' && lastName,
-          "data.language": language !='' && language,
-          "data.gender": gender !='' && gender,
-          "data.age": age  !=''&& age,
-          "data.instagram": instagram !='' && instagram,
-          "data.tikTok": tikTok !='' && tikTok,
-          "data.youtube": youtube !='' && youtube,
-          "data.twitter": twitter !='' && twitter,
+          "data.firstName": firstName,
+          "data.lastName": lastName,
+          "data.language": language,
+          "data.gender": gender,
+          "data.age": age,
+          "data.instagram": instagram,
+          "data.tikTok": tikTok,
+          "data.youtube": youtube,
+          "data.twitter": twitter,
         },
       }
     );
-    res.status(200).json({
-      message: "Datos cargados",
-      succes: true
-    })
 
+    if (!username) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Data cargada correctamente.",
+      });
+    }
   } catch (err) {
     console.log(err);
   }
