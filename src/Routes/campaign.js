@@ -14,6 +14,14 @@ campaign.post("/create", (req, res) => {
     createCampaign.run(req, res, databaseConnection);
   });
 
+campaign.post("/deleteCampaign", (req, res) =>{
+  createCampaign.deleteCampaign(req, res, databaseConnection)
+});
+
+campaign.delete("/deleteAllCampaigns", (req, res) =>{
+  createCampaign.deleteAllCampaigns(req, res, databaseConnection)
+});
+
 campaign.post("/advertiserCampaigns", (req, res) => {
   createCampaign.advertiserCampaigns(req, res, databaseConnection);
 });
