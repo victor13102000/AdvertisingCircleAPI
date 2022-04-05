@@ -50,31 +50,31 @@ async function runUser(req, res, databaseConnection) {
       .db("adpolygon")
       .collection("users");
 
+
     const usuarioExistente = await usersCollection.findOne({ username: username });
 
-    if(!usuarioExistente) {
-      await usersCollection.insertOne(user)
+
+    if (!usuarioExistente) {
+      await usersCollection.insertOne(user);
       if (!username) {
-      res.status(404).json({
-        success: false,
-        message: "User undefined",
-      });
+        res.status(404).json({
+          success: false,
+          message: "User undefined",
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          message: "User creado correctamente.",
+          user: user,
+        });
+      }
     } else {
       res.status(200).json({
-        success: true,
-        message: "User creado correctamente.",
-        user:user
+        succes: true,
+        message: "login correcto",
+        user: usuarioExistente,
       });
     }
-  }else{
-    res.status(200).json({
-      succes:true,
-      message: "login correcto",
-      user: usuarioExistente
-    })
-    
-  }
-    
   } catch (err) {
     console.log(err);
   }
@@ -83,7 +83,7 @@ async function runUser(req, res, databaseConnection) {
 
 async function updateUserType(req, res, databaseConnection) {
   try {
-    const tipo = req.body.type
+    const tipo = req.body.type;
     const token = req.body.token;
     const config = {
       headers: { Authorization: `Bearer ${token}` },
@@ -102,20 +102,19 @@ async function updateUserType(req, res, databaseConnection) {
       .db("adpolygon")
       .collection("users");
 
-      await usersCollection.updateOne(
-        { username },
-        {
-          $set: {
-            "type":tipo
-          }
-        }
-      );
+    await usersCollection.updateOne(
+      { username },
+      {
+        $set: {
+          type: tipo,
+        },
+      }
+    );
 
-      res.status(200).json({
-        message: "Datos cargados",
-        succes: true
-      })
-    
+    res.status(200).json({
+      message: "Datos cargados",
+      succes: true,
+    });
   } catch (err) {
     console.log(err);
   }
@@ -157,30 +156,24 @@ async function updateUser(req, res, databaseConnection) {
       { username },
       {
         $set: {
-          "data.firstName": firstName,
-          "data.lastName": lastName,
-          "data.language": language,
-          "data.gender": gender,
-          "data.age": age,
-          "data.instagram": instagram,
-          "data.tikTok": tikTok,
-          "data.youtube": youtube,
-          "data.twitter": twitter,
+
+          "data.firstName": firstName != "" && firstName,
+          "data.lastName": lastName != "" && lastName,
+          "data.language": language != "" && language,
+          "data.gender": gender != "" && gender,
+          "data.age": age != "" && age,
+          "data.instagram": instagram != "" && instagram,
+          "data.tikTok": tikTok != "" && tikTok,
+          "data.youtube": youtube != "" && youtube,
+          "data.twitter": twitter != "" && twitter,
         },
       }
     );
+    res.status(200).json({
+      message: "Datos cargados",
+      succes: true,
+    });
 
-    if (!username) {
-      res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        message: "Data cargada correctamente.",
-      });
-    }
   } catch (err) {
     console.log(err);
   }
@@ -220,7 +213,7 @@ async function dataUser(req, res, databaseConnection) {
       });
     }
   } catch (error) {
-    console.log( error);
+    console.log(error);
   }
 }
 
@@ -228,5 +221,5 @@ module.exports = {
   runUser: runUser,
   updateUser: updateUser,
   updateUserType: updateUserType,
-  dataUser: dataUser
+  dataUser: dataUser,
 };
