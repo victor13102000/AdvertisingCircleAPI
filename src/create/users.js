@@ -50,10 +50,9 @@ async function runUser(req, res, databaseConnection) {
       .db("adpolygon")
       .collection("users");
 
-    const usuarioExistente = await usersCollection.findOne({
-      username: username,
-    });
-    console.log(usuarioExistente);
+
+    const usuarioExistente = await usersCollection.findOne({ username: username });
+
 
     if (!usuarioExistente) {
       await usersCollection.insertOne(user);
@@ -80,6 +79,7 @@ async function runUser(req, res, databaseConnection) {
     console.log(err);
   }
 }
+
 
 async function updateUserType(req, res, databaseConnection) {
   try {
@@ -156,6 +156,7 @@ async function updateUser(req, res, databaseConnection) {
       { username },
       {
         $set: {
+
           "data.firstName": firstName != "" && firstName,
           "data.lastName": lastName != "" && lastName,
           "data.language": language != "" && language,
@@ -172,6 +173,7 @@ async function updateUser(req, res, databaseConnection) {
       message: "Datos cargados",
       succes: true,
     });
+
   } catch (err) {
     console.log(err);
   }
