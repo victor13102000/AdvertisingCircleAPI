@@ -13,6 +13,13 @@ global.config = require("../../config.json");
     createCampaign.run(req, res, databaseConnection);
   });
 
+campaign.post("/deleteCampaign", (req, res) =>{
+  createCampaign.deleteCampaign(req, res, databaseConnection)
+});
+
+campaign.delete("/deleteAllCampaigns", (req, res) =>{
+  createCampaign.deleteAllCampaigns(req, res, databaseConnection)
+});
 
   campaign.put("/update", (req, res) => {
     createCampaign.updateCampaigns(req, res, databaseConnection);
