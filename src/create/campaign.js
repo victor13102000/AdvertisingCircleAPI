@@ -7,8 +7,7 @@ axios.default.httpsAgent = new https.Agent({
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
-var ObjectId = require('mongodb').ObjectId;
-
+const ObjectId = require('mongodb').ObjectId;
 
 async function run(req, res, databaseConnection) {
 
@@ -92,10 +91,10 @@ async function run(req, res, databaseConnection) {
             });
         }
     } catch (err) {
+
     console.log(err);
   }
 }
-
 
 async function deleteCampaign(req, res, databaseConnection){
     try {
@@ -165,7 +164,97 @@ async function deleteAllCampaigns(req, res, databaseConnection){
     } catch(error){
         console.log(error)
     }
+
+async function updateCampaigns(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const user = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+    const userInfo = await usersCollection.findOne({ username: user });
+
+    const userType = userInfo.type;
+
+    if (userType === "publisher") {
+      return res.status(400).json({
+        message: "User is not an advertiser",
+        success: false,
+      });
+    }
+    const _id = ObjectId(req.body.id);
+
+    const {
+      advertiser,
+      name,
+      description,
+      startDate,
+      endDate,
+      state,
+      type,
+      data,
+      imgUrl,
+    } = req.body;
+
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+
+    const filter = {
+      _id: _id,
+    };
+
+    const options = { upset: false };
+
+    const updateDoc = {
+      $set: {
+        name: name != "" && name,
+        imgUrl: imgUrl != "" && imgUrl,
+        description: description != "" && description,
+        startDate: startDate != "" && startDate,
+        endDate: endDate != "" && endDate,
+        data: data != "" && data,
+      },
+    };
+
+    if (state === 1 && user === advertiser) {
+      const result = await campaignsCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      console.log(
+        `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`
+      );
+      res.status(200).json({
+        message: "update data",
+        success: true,
+      });
+    } else {
+      res.status(400).json({
+        message: "update not available",
+        success: false,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
 }
+
 
 async function advertiserCampaigns(req, res, databaseConnection) {
 
@@ -278,8 +367,6 @@ async function allCampaigns (req, res, databaseConnection) {
 
 }
 
-
-
 module.exports = {
 
     "run": run,
@@ -287,6 +374,7 @@ module.exports = {
     "deleteAllCampaigns": deleteAllCampaigns,
     "allCampaigns": allCampaigns,
     "advertiserCampaigns": advertiserCampaigns,
-    "advertiserSpecificCampaign": advertiserSpecificCampaign
+    "advertiserSpecificCampaign": advertiserSpecificCampaign,
+    "updateCampaigns": updateCampaigns,
 
 }
