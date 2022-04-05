@@ -7,163 +7,165 @@ axios.default.httpsAgent = new https.Agent({
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
-const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require("mongodb").ObjectId;
 
 async function run(req, res, databaseConnection) {
+  try {
+    const body = req.body;
 
-    try {
-        const body = req.body;
-    
-        const token = req.body.token;
-    
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-        const bodyParameters = {
-          "Content-Type": "application/json",
-        };
-        const prueba = await axios.post(
-          "https://accounts.clusterby.com/auth",
-          bodyParameters,
-          config
-        );
+    const token = req.body.token;
 
-        const advertiser = prueba.data.username;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-        const name = body.name;
-        const description = body.description;
-        const startDate = body.startDate;
-        const endDate = body.endDate;
-        const type = body.type;
-        const data = body.data;
-        const imgUrl = body.img;
+    const advertiser = prueba.data.username;
 
-        // URL campaign
-        if (type == 0) {
+    const name = body.name;
+    const description = body.description;
+    const startDate = body.startDate;
+    const endDate = body.endDate;
+    const type = body.type;
+    const data = body.data;
+    const imgUrl = body.img;
 
-            const state = 1; // init state
+    // URL campaign
+    if (type == 0) {
+      const state = 1; // init state
 
-            const campaign = {
+      const campaign = {
+        name: name,
+        imgUrl: imgUrl,
+        description: description,
+        state: state,
+        advertiser: advertiser,
+        startDate: startDate,
+        endDate: endDate,
+        data: data,
+      };
 
-                'name': name,
-                "imgUrl": imgUrl,
-                'description': description,
-                'state': state,
-                'advertiser': advertiser,
-                'startDate': startDate,
-                'endDate': endDate,
-                'data': data,
+      const campaignsCollection = databaseConnection
+        .db("adpolygon")
+        .collection("campaigns");
+      const previousCampaign = await campaignsCollection.findOne({
+        advertiser: advertiser,
+        name: body.name,
+      });
 
-            };
+      if (previousCampaign) {
+        return res.status(400).json({
+          success: false,
+          message: "The user has already created a campaing with this name.",
+        });
+      }
 
-            const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-            const previousCampaign = await campaignsCollection.findOne({ advertiser: advertiser, name: body.name });
-        
+      if (new Date(`<${startDate}>`) < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: "Start date has already passed.",
+        });
+      }
 
-            if(previousCampaign){
-                return res.status(400).json({
-                    'success': false,
-                    'message': 'The user has already created a campaing with this name.'
-                })
-            }
+      if (new Date(`<${startDate}>`) > new Date(`<${endDate}>`)) {
+        return res.status(400).json({
+          success: false,
+          message: "End date cannot be before Start date.",
+        });
+      }
 
-            if(new Date(`<${startDate}>`)< new Date()){
-                return res.status(400).json({
-                    'success': false,
-                    'message': 'Start date has already passed.'
-                })
-            }
+      await campaignsCollection.insertOne(campaign);
 
-            if(new Date(`<${startDate}>`) > new Date(`<${endDate}>`)){
-                return res.status(400).json({
-                    'success': false,
-                    'message': 'End date cannot be before Start date.'
-                })
-            }
-
-            await campaignsCollection.insertOne(campaign);
-
-            res.status(200).json({
-
-                'success': true,
-                'message': 'The campaign has been succesfully created.'
-
-            });
-        }
-    } catch (err) {
-
+      res.status(200).json({
+        success: true,
+        message: "The campaign has been succesfully created.",
+      });
+    }
+  } catch (err) {
     console.log(err);
   }
 }
 
-async function deleteCampaign(req, res, databaseConnection){
-    try {
-        const token = req.body.token;
-    
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-        const bodyParameters = {
-          "Content-Type": "application/json",
-        };
-        const prueba = await axios.post(
-          "https://accounts.clusterby.com/auth",
-          bodyParameters,
-          config
-        );
-    
-        const advertiser = prueba.data.username;
-        const _id = req.body.id
+async function deleteCampaign(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
 
-        const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-        const elimin = await campaignsCollection.deleteOne({ _id: ObjectId(_id),advertiser:advertiser });
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
+    const advertiser = prueba.data.username;
+    const _id = req.body.id;
 
-        if(elimin.acknowledged){
-            res.status(200).json({
-                message: "Campaign deleted",
-                success: true
-            });
-            
-        }
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+    const elimin = await campaignsCollection.deleteOne({
+      _id: ObjectId(_id),
+      advertiser: advertiser,
+    });
 
-    } catch(error){
-        console.log(error)
+    if (elimin.acknowledged) {
+      res.status(200).json({
+        message: "Campaign deleted",
+        success: true,
+      });
     }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-async function deleteAllCampaigns(req, res, databaseConnection){
-    try {
-        const token = req.body.token;
-    
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-        const bodyParameters = {
-          "Content-Type": "application/json",
-        };
-        const prueba = await axios.post(
-          "https://accounts.clusterby.com/auth",
-          bodyParameters,
-          config
-        );
-    
-        const advertiser = prueba.data.username;
+async function deleteAllCampaigns(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
 
-        const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-        const elimin = await campaignsCollection.deleteMany({ advertiser:advertiser });
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-        if(elimin.acknowledged){
-            res.status(200).json({
-                message: `${elimin.deletedCount} Campaigns deleted`,
-                success: true
-            });
-            
-        }
+    const advertiser = prueba.data.username;
 
-    } catch(error){
-        console.log(error)
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+    const elimin = await campaignsCollection.deleteMany({
+      advertiser: advertiser,
+    });
+
+    if (elimin.acknowledged) {
+      res.status(200).json({
+        message: `${elimin.deletedCount} Campaigns deleted`,
+        success: true,
+      });
     }
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function updateCampaigns(req, res, databaseConnection) {
   try {
@@ -255,126 +257,123 @@ async function updateCampaigns(req, res, databaseConnection) {
   }
 }
 
-
 async function advertiserCampaigns(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
 
-    try {
-        const token = req.body.token;
-    
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-        const bodyParameters = {
-          "Content-Type": "application/json",
-        };
-        const prueba = await axios.post(
-          "https://accounts.clusterby.com/auth",
-          bodyParameters,
-          config
-        );
-    
-        const advertiser = prueba.data.username;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-        const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-        const allCampaigns = await campaignsCollection.find({ advertiser:advertiser });
+    const advertiser = prueba.data.username;
 
-        const campañas = await allCampaigns.toArray()
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+    const allCampaigns = await campaignsCollection.find({
+      advertiser: advertiser,
+    });
 
-        if(campañas[0]) {
-            return res.status(200).json({
-                success: true,
-                message: "Campaigns Ok.",
-                campaigns: campañas,
-              });
-        }else {
-            return res.status(400).json({
-                success: true,
-                message: "Advertiser hasn´t uploaded any campaign yet."
-              });
-        }
-    } catch (error) {
-        console.log( error);
-      }
+    const campañas = await allCampaigns.toArray();
 
+    if (campañas[0]) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: campañas,
+      });
+    } else {
+      return res.status(400).json({
+        success: true,
+        message: "Advertiser hasn´t uploaded any campaign yet.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-async function advertiserSpecificCampaign(req, res, databaseConnection) { 
+async function advertiserSpecificCampaign(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
 
-    try {
-        const token = req.body.token;
-    
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-        const bodyParameters = {
-          "Content-Type": "application/json",
-        };
-        const prueba = await axios.post(
-          "https://accounts.clusterby.com/auth",
-          bodyParameters,
-          config
-        );
-    
-        const advertiser = prueba.data.username;
-        const _id = req.body.id
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
-        const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-        const campaign = await campaignsCollection.findOne({_id: ObjectId(_id)})
+    const advertiser = prueba.data.username;
+    const _id = req.body.id;
 
-        if(campaign && (campaign.advertiser === advertiser)) {
-            return res.status(200).json({
-                success: true,
-                message: "Campaigns Ok.",
-                campaigns: campaign,
-              });
-        }else {
-            return res.status(400).json({
-                success: true,
-                message: "Something wen´t wrong, information not available."
-              });
-        }
-    } catch (error) {
-        console.log( error);
-      }
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+    const campaign = await campaignsCollection.findOne({ _id: ObjectId(_id) });
 
+    if (campaign && campaign.advertiser === advertiser) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: campaign,
+      });
+    } else {
+      return res.status(400).json({
+        success: true,
+        message: "Something wen´t wrong, information not available.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-async function allCampaigns (req, res, databaseConnection) {
+async function allCampaigns(req, res, databaseConnection) {
+  try {
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+    const allCampaigns = await campaignsCollection.find({});
 
-    try {
-        const campaignsCollection = databaseConnection.db('adpolygon').collection('campaigns');
-        const allCampaigns = await campaignsCollection.find({});
+    const campañas = await allCampaigns.toArray();
 
-        const campañas = await allCampaigns.toArray()
-
-        if(campañas) {
-            return res.status(200).json({
-                success: true,
-                message: "Campaigns Ok.",
-                campaigns: campañas,
-              });
-        }else {
-            return res.status(400).json({
-                success: true,
-                message: "No campaign has been uploaded yet."
-              });
-        }
-
-
-    } catch (error) {
-        console.log( error);
-      }
-
+    if (campañas) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: campañas,
+      });
+    } else {
+      return res.status(400).json({
+        success: true,
+        message: "No campaign has been uploaded yet.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 module.exports = {
-
-    "run": run,
-    "deleteCampaign": deleteCampaign,
-    "deleteAllCampaigns": deleteAllCampaigns,
-    "allCampaigns": allCampaigns,
-    "advertiserCampaigns": advertiserCampaigns,
-    "advertiserSpecificCampaign": advertiserSpecificCampaign,
-    "updateCampaigns": updateCampaigns,
-
-}
+  run: run,
+  deleteCampaign: deleteCampaign,
+  deleteAllCampaigns: deleteAllCampaigns,
+  allCampaigns: allCampaigns,
+  advertiserCampaigns: advertiserCampaigns,
+  advertiserSpecificCampaign: advertiserSpecificCampaign,
+  updateCampaigns: updateCampaigns,
+};
