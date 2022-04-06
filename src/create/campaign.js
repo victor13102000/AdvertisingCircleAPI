@@ -13,7 +13,7 @@ const ObjectId = require("mongodb").ObjectId;
 async function run(req, res, databaseConnection) {
   try {
     const body = req.body.data;
-
+    
     const token = req.body.token;
 
     const config = {
@@ -49,8 +49,8 @@ async function run(req, res, databaseConnection) {
     const startDate = body.startDate;
     const endDate = body.endDate;
     const type = body.type;
-    const objetives = body.objetives;
-    const rules = body.rules;
+    const objetives = {impresionesDeseadas:body.impresionesDeseadas, URL_objetivo:body.URL_objetivo};
+    const rules = {agePublisher:body.agePublisher, gender:body.gender, language:body.language, speech:body.speech};
     const imgUrl = body.img;
 
     /*
@@ -66,7 +66,7 @@ async function run(req, res, databaseConnection) {
     */
 
     // URL campaign
-    if (type == 0) {
+    if (type == "URL") {
       const state = 1; // init state
 
       const campaign = {
