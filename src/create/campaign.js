@@ -1,5 +1,6 @@
 const axios = require("axios");
 const https = require("https");
+global.config = require("../../config.json")
 
 axios.default.httpsAgent = new https.Agent({
   rejectUnauthorized: false,
@@ -11,7 +12,7 @@ const ObjectId = require("mongodb").ObjectId;
 
 async function run(req, res, databaseConnection) {
   try {
-    const body = req.body;
+    const body = req.body.data;
 
     const token = req.body.token;
 
@@ -29,13 +30,40 @@ async function run(req, res, databaseConnection) {
 
     const advertiser = prueba.data.username;
 
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+    const userInfo = await usersCollection.findOne({ username: advertiser });
+
+    const userType = userInfo.type;
+
+    if (userType === "publisher") {
+      return res.status(400).json({
+        message: "User is not an advertiser",
+        success: false,
+      });
+    }
+
     const name = body.name;
     const description = body.description;
     const startDate = body.startDate;
     const endDate = body.endDate;
     const type = body.type;
-    const data = body.data;
+    const objetives = body.objetives;
+    const rules = body.rules;
     const imgUrl = body.img;
+
+    /*
+    const headers = {}
+    const formData = {
+        'image': imgUrl
+    }
+
+    axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
+    .then(res => console.log(res))
+    .catch(err => console.log(err))
+
+    */
 
     // URL campaign
     if (type == 0) {
@@ -49,7 +77,8 @@ async function run(req, res, databaseConnection) {
         advertiser: advertiser,
         startDate: startDate,
         endDate: endDate,
-        data: data,
+        rules: rules,
+        objectives: objetives
       };
 
       const campaignsCollection = databaseConnection
@@ -110,6 +139,21 @@ async function deleteCampaign(req, res, databaseConnection) {
     );
 
     const advertiser = prueba.data.username;
+
+    const usersCollection = databaseConnection
+    .db("adpolygon")
+    .collection("users");
+    const userInfo = await usersCollection.findOne({ username: advertiser });
+
+    const userType = userInfo.type;
+
+    if (userType === "publisher") {
+        return res.status(400).json({
+        message: "User is not an advertiser",
+        success: false,
+        });
+    }
+
     const _id = req.body.id;
 
     const campaignsCollection = databaseConnection
@@ -148,6 +192,21 @@ async function deleteAllCampaigns(req, res, databaseConnection) {
     );
 
     const advertiser = prueba.data.username;
+
+    const usersCollection = databaseConnection
+    .db("adpolygon")
+    .collection("users");
+    const userInfo = await usersCollection.findOne({ username: advertiser });
+
+    const userType = userInfo.type;
+
+    if (userType === "publisher") {
+        return res.status(400).json({
+        message: "User is not an advertiser",
+        success: false,
+        });
+    }
+
 
     const campaignsCollection = databaseConnection
       .db("adpolygon")
@@ -208,7 +267,8 @@ async function updateCampaigns(req, res, databaseConnection) {
       endDate,
       state,
       type,
-      data,
+      objectives,
+      rules,
       imgUrl,
     } = req.body;
 
@@ -229,7 +289,8 @@ async function updateCampaigns(req, res, databaseConnection) {
         description: description != "" && description,
         startDate: startDate != "" && startDate,
         endDate: endDate != "" && endDate,
-        data: data != "" && data,
+        objectives: objectives != "" && objectives,
+        rules: rules != "" && rules
       },
     };
 
@@ -368,7 +429,28 @@ async function allCampaigns(req, res, databaseConnection) {
   }
 }
 
+/*
+async function pruebaImg (req, res, databaseConnection) {
+    try {
+        const imgUrl = req.body.img
+
+        const headers = {}
+        const formData = {
+            'image': imgUrl
+        }
+    
+        axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
+        .then(res => console.log(res))
+        .catch(err => console.log(err))
+
+    } catch(error){
+
+    }
+}
+*/
+
 module.exports = {
+    //pruebaImg: pruebaImg,
   run: run,
   deleteCampaign: deleteCampaign,
   deleteAllCampaigns: deleteAllCampaigns,

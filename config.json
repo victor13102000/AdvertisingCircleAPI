@@ -1,6 +1,9 @@
 {
     "port": 3005,
     "database": {
-        "url": "mongodb+srv://adpolygon:W8SQRzANdZ96m39C@clusterby.90qs9.mongodb.net/adpolygon?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
+        "url": "mongodb+srv://adpolygon:O6sOKIWTRg8XHcQo@clusterby.90qs9.mongodb.net/test"
+    },
+    "imgBB":{
+        "ApiKey":"980b62aafbf76203e0fbc04422687cdf"
     }
 }
