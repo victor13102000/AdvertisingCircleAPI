@@ -1,6 +1,6 @@
 const axios = require("axios");
 const https = require("https");
-global.config = require("../../config.json")
+global.config = require("../../config.json");
 
 axios.default.httpsAgent = new https.Agent({
   rejectUnauthorized: false,
@@ -13,7 +13,7 @@ const ObjectId = require("mongodb").ObjectId;
 async function run(req, res, databaseConnection) {
   try {
     const body = req.body.data;
-    
+
     const token = req.body.token;
 
     const config = {
@@ -49,8 +49,17 @@ async function run(req, res, databaseConnection) {
     const startDate = body.startDate;
     const endDate = body.endDate;
     const type = body.type;
-    const objetives = {impresionesDeseadas:body.impresionesDeseadas, URL_objetivo:body.URL_objetivo};
-    const rules = {agePublisher:body.agePublisher, gender:body.gender, language:body.language, speech:body.speech};
+    const objetives = {
+      impresionesDeseadas: body.impresionesDeseadas,
+      URL_objetivo: body.URL_objetivo,
+    };
+    const rules = {
+      ageMin: body.ageMin,
+      ageMax: body.ageMax,
+      gender: body.gender,
+      language: body.language,
+      speech: body.speech,
+    };
     const imgUrl = body.img;
 
     /*
@@ -67,7 +76,7 @@ async function run(req, res, databaseConnection) {
 
     // URL campaign
     if (type == "URL") {
-      const state = 1; // init state
+      const state = "Created"; // init state
 
       const campaign = {
         name: name,
@@ -75,10 +84,10 @@ async function run(req, res, databaseConnection) {
         description: description,
         state: state,
         advertiser: advertiser,
-        startDate: startDate,
-        endDate: endDate,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
         rules: rules,
-        objectives: objetives
+        objectives: objetives,
       };
 
       const campaignsCollection = databaseConnection
@@ -96,12 +105,12 @@ async function run(req, res, databaseConnection) {
         });
       }
 
-      if (new Date(`<${startDate}>`) < new Date()) {
+      /* if (new Date(`<${startDate}>`) < new Date()) {
         return res.status(400).json({
           success: false,
           message: "Start date has already passed.",
         });
-      }
+      } */
 
       if (new Date(`<${startDate}>`) > new Date(`<${endDate}>`)) {
         return res.status(400).json({
@@ -141,17 +150,17 @@ async function deleteCampaign(req, res, databaseConnection) {
     const advertiser = prueba.data.username;
 
     const usersCollection = databaseConnection
-    .db("adpolygon")
-    .collection("users");
+      .db("adpolygon")
+      .collection("users");
     const userInfo = await usersCollection.findOne({ username: advertiser });
 
     const userType = userInfo.type;
 
     if (userType === "publisher") {
-        return res.status(400).json({
+      return res.status(400).json({
         message: "User is not an advertiser",
         success: false,
-        });
+      });
     }
 
     const _id = req.body.id;
@@ -194,19 +203,18 @@ async function deleteAllCampaigns(req, res, databaseConnection) {
     const advertiser = prueba.data.username;
 
     const usersCollection = databaseConnection
-    .db("adpolygon")
-    .collection("users");
+      .db("adpolygon")
+      .collection("users");
     const userInfo = await usersCollection.findOne({ username: advertiser });
 
     const userType = userInfo.type;
 
     if (userType === "publisher") {
-        return res.status(400).json({
+      return res.status(400).json({
         message: "User is not an advertiser",
         success: false,
-        });
+      });
     }
-
 
     const campaignsCollection = databaseConnection
       .db("adpolygon")
@@ -258,19 +266,29 @@ async function updateCampaigns(req, res, databaseConnection) {
       });
     }
     const _id = ObjectId(req.body.id);
+    console.log(req.body);
+    const body = req.body.data;
 
-    const {
-      advertiser,
-      name,
-      description,
-      startDate,
-      endDate,
-      state,
-      type,
-      objectives,
-      rules,
-      imgUrl,
-    } = req.body;
+    const name = body.name;
+    const description = body.description;
+    const startDate = new Date(body.startDate);
+    const endDate = new Date(body.endDate);
+    const type = body.type;
+    const objectives = {
+      impresionesDeseadas: body.impresionesDeseadas,
+      URL_objetivo: body.URL_objetivo,
+    };
+    const rules = {
+      ageMin: body.ageMin,
+      ageMax: body.ageMax,
+      gender: body.gender,
+      language: body.language,
+      speech: body.speech,
+    };
+    const imgUrl = body.img;
+    const state = body.state || "Created";
+
+    console.log(name);
 
     const campaignsCollection = databaseConnection
       .db("adpolygon")
@@ -284,17 +302,17 @@ async function updateCampaigns(req, res, databaseConnection) {
 
     const updateDoc = {
       $set: {
-        name: name != "" && name,
+        name: name,
         imgUrl: imgUrl != "" && imgUrl,
         description: description != "" && description,
         startDate: startDate != "" && startDate,
         endDate: endDate != "" && endDate,
         objectives: objectives != "" && objectives,
-        rules: rules != "" && rules
+        rules: rules != "" && rules,
       },
     };
 
-    if (state === 1 && user === advertiser) {
+    if (state === "Created") {
       const result = await campaignsCollection.updateOne(
         filter,
         updateDoc,
@@ -339,6 +357,33 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     const campaignsCollection = databaseConnection
       .db("adpolygon")
       .collection("campaigns");
+
+    date = new Date();
+    console.log(date);
+
+    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date } };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    const resultOne = await campaignsCollection.updateMany(
+      filterOne,
+      setStateOne
+    );
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finalized",
+      },
+    };
+    const resultTwo = await campaignsCollection.updateMany(
+      filterTwo,
+      setStateTwo
+    );
+
     const allCampaigns = await campaignsCollection.find({
       advertiser: advertiser,
     });
@@ -384,6 +429,33 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     const campaignsCollection = databaseConnection
       .db("adpolygon")
       .collection("campaigns");
+
+    date = new Date();
+    console.log(date);
+
+    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date } };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    const resultOne = await campaignsCollection.updateMany(
+      filterOne,
+      setStateOne
+    );
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finalized",
+      },
+    };
+    const resultTwo = await campaignsCollection.updateMany(
+      filterTwo,
+      setStateTwo
+    );
+
     const campaign = await campaignsCollection.findOne({ _id: ObjectId(_id) });
 
     if (campaign && campaign.advertiser === advertiser) {
@@ -408,6 +480,33 @@ async function allCampaigns(req, res, databaseConnection) {
     const campaignsCollection = databaseConnection
       .db("adpolygon")
       .collection("campaigns");
+
+    date = new Date();
+    console.log(date);
+
+    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date } };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    const resultOne = await campaignsCollection.updateMany(
+      filterOne,
+      setStateOne
+    );
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finalized",
+      },
+    };
+    const resultTwo = await campaignsCollection.updateMany(
+      filterTwo,
+      setStateTwo
+    );
+
     const allCampaigns = await campaignsCollection.find({});
 
     const campañas = await allCampaigns.toArray();
@@ -450,7 +549,7 @@ async function pruebaImg (req, res, databaseConnection) {
 */
 
 module.exports = {
-    //pruebaImg: pruebaImg,
+  //pruebaImg: pruebaImg,
   run: run,
   deleteCampaign: deleteCampaign,
   deleteAllCampaigns: deleteAllCampaigns,
