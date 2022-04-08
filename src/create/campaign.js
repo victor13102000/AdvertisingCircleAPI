@@ -361,7 +361,7 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     date = new Date();
     console.log(date);
 
-    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date } };
+    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date }, state:{$ne:'Finished'} };
     const setStateOne = {
       $set: {
         state: "In Progress",
@@ -433,7 +433,7 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     date = new Date();
     console.log(date);
 
-    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date } };
+    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date }, state:{$ne:'Finished'} };
     const setStateOne = {
       $set: {
         state: "In Progress",
@@ -559,7 +559,7 @@ async function cancelCampaing (req, res, databaseConnection){
       },
     };
 
-    const result = await campaignsCollection.updateMany(
+    const result = await campaignsCollection.updateOne(
       filter,
       setStateCampaign
     );
