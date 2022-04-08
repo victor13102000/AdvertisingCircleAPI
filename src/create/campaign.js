@@ -376,7 +376,7 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     const filterTwo = { endDate: { $lt: date } };
     const setStateTwo = {
       $set: {
-        state: "Finalized",
+        state: "Finished",
       },
     };
     const resultTwo = await campaignsCollection.updateMany(
@@ -448,7 +448,7 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     const filterTwo = { endDate: { $lt: date } };
     const setStateTwo = {
       $set: {
-        state: "Finalized",
+        state: "Finished",
       },
     };
     const resultTwo = await campaignsCollection.updateMany(
@@ -499,7 +499,7 @@ async function allCampaigns(req, res, databaseConnection) {
     const filterTwo = { endDate: { $lt: date } };
     const setStateTwo = {
       $set: {
-        state: "Finalized",
+        state: "Finished",
       },
     };
     const resultTwo = await campaignsCollection.updateMany(
@@ -527,7 +527,51 @@ async function allCampaigns(req, res, databaseConnection) {
     console.log(error);
   }
 }
+async function cancelCampaing (req, res, databaseConnection){
+  try{
+    const token = req.body.token;
+  
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
 
+    const advertiser = prueba.data.username;
+    const id = ObjectId(req.body.id);
+      
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+
+    date = new Date();
+
+    const filter = { _id: id };
+    const setStateCampaign = {
+      $set: {
+        state: "Finished"
+      },
+    };
+
+    const result = await campaignsCollection.updateMany(
+      filter,
+      setStateCampaign
+    );
+    res.status(200).json({
+      message: "Campaign Finished",
+      success: true
+    })
+
+  }catch (error) {
+    console.log(error);
+  }
+}
 /*
 async function pruebaImg (req, res, databaseConnection) {
     try {
@@ -557,4 +601,5 @@ module.exports = {
   advertiserCampaigns: advertiserCampaigns,
   advertiserSpecificCampaign: advertiserSpecificCampaign,
   updateCampaigns: updateCampaigns,
+  cancelCampaing: cancelCampaing,
 };

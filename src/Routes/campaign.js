@@ -13,30 +13,32 @@ global.config = require("../../config.json");
     createCampaign.run(req, res, databaseConnection);
   });
 
-campaign.post("/deleteCampaign", (req, res) =>{
-  createCampaign.deleteCampaign(req, res, databaseConnection)
-});
+  campaign.post("/deleteCampaign", (req, res) => {
+    createCampaign.deleteCampaign(req, res, databaseConnection);
+  });
 
-campaign.delete("/deleteAllCampaigns", (req, res) =>{
-  createCampaign.deleteAllCampaigns(req, res, databaseConnection)
-});
+  campaign.delete("/deleteAllCampaigns", (req, res) => {
+    createCampaign.deleteAllCampaigns(req, res, databaseConnection);
+  });
 
   campaign.put("/update", (req, res) => {
     createCampaign.updateCampaigns(req, res, databaseConnection);
   });
 
-campaign.post("/advertiserCampaigns", (req, res) => {
-  createCampaign.advertiserCampaigns(req, res, databaseConnection);
-});
+  campaign.post("/advertiserCampaigns", (req, res) => {
+    createCampaign.advertiserCampaigns(req, res, databaseConnection);
+  });
 
-campaign.post("/specific", (req, res) => {
-  createCampaign.advertiserSpecificCampaign(req, res, databaseConnection);
-});
+  campaign.post("/specific", (req, res) => {
+    createCampaign.advertiserSpecificCampaign(req, res, databaseConnection);
+  });
 
-campaign.get("/allCampaigns", (req, res) => {
-  createCampaign.allCampaigns(req, res, databaseConnection);
-});
+  campaign.get("/allCampaigns", (req, res) => {
+    createCampaign.allCampaigns(req, res, databaseConnection);
+  });
 
-
+  campaign.put("/cancelCampaing", (req, res) => {
+    createCampaign.cancelCampaing(req, res, databaseConnection);
+  });
 })();
 module.exports = campaign;
