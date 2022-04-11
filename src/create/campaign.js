@@ -702,14 +702,30 @@ async function favoriteCampaigns(req, res, databaseConnection) {
         name: nameCampaign,
       });
       if (campaignInfo) {
-        usersCollection.updateOne(
-          { username: advertiser },
-          { $set: { [`favorites.${favoritesLength}`]: campaignInfo } }
-        );
-        res.status(200).json({
-          message: "Add campaign to favorite",
-          success: true,
+        //await usersCollection.find({ favorites: {name: campaignInfo.name } })
+let verificadorRep= false
+
+        let aux= userInfo.favorites.forEach(campaign => {
+          if( campaign.name === campaignInfo.name){
+            verificadorRep= true
+          }
         });
+
+        if(verificadorRep === true){
+          res.status(406).json({
+            message: 'Not acceptable',
+            success: false
+          })
+        }else{
+          usersCollection.updateOne(
+           { username: advertiser },
+           { $set: { [`favorites.${favoritesLength}`]: campaignInfo } }
+         );
+         res.status(200).json({
+           message: "Add campaign to favorite",
+           success: true,
+         }); 
+        }
       }
     }
   } catch (error) {
