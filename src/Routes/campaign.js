@@ -48,5 +48,8 @@ global.config = require("../../config.json");
   campaign.post("/addtofavorite", (req, res) => {
     createCampaign.favoriteCampaigns(req, res, databaseConnection);
   });
+  campaign.post("/listtofavorite", (req, res) => {
+    createCampaign.favoriteCampaignsList(req, res, databaseConnection);
+  });
 })();
 module.exports = campaign;

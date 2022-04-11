@@ -603,7 +603,6 @@ async function pruebaImg (req, res, databaseConnection) {
 async function filterCampaigns(req, res, databaseConnection) {
   try {
     const body = req.body;
-    const campaign = body.campaign;
     const token = body.token;
 
     const config = {
@@ -630,7 +629,7 @@ async function filterCampaigns(req, res, databaseConnection) {
       const { age, language, gender } = user.data;
       const ageP = parseInt(age);
 
-      console.log(ageP);
+     
 
       const campaignsCollection = databaseConnection
         .db("adpolygon")
@@ -655,7 +654,7 @@ async function filterCampaigns(req, res, databaseConnection) {
           { $or: [{ state: "In Progress" }, { state: "Created" }] },
         ],
       });
-      console.log(gender);
+  
       const campañas = await campaignFilter.toArray();
 
       res.status(200).json({
@@ -717,6 +716,40 @@ async function favoriteCampaigns(req, res, databaseConnection) {
     console.log(error);
   }
 }
+
+async function favoriteCampaignsList(req, res, databaseConnection) {
+  try {
+    const body = req.body;
+    const token = body.token;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    ); 
+    const username = prueba.data.username;
+    const usersCollection = databaseConnection
+    .db("adpolygon")
+    .collection("users");
+  const userInfo = await usersCollection.findOne({ username: username });
+  const favorites = userInfo.favorites
+
+  res.status(200).json({
+    message: "List favorite campaign",
+    success: true,
+    favorites:favorites
+  });
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 module.exports = {
   //pruebaImg: pruebaImg,
   run: run,
@@ -729,4 +762,5 @@ module.exports = {
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
   favoriteCampaigns: favoriteCampaigns,
+  favoriteCampaignsList:favoriteCampaignsList
 };
