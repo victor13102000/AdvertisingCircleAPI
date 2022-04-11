@@ -88,6 +88,7 @@ async function run(req, res, databaseConnection) {
         endDate: new Date(endDate),
         rules: rules,
         objectives: objetives,
+        favorites: favorites,
       };
 
       const campaignsCollection = databaseConnection
@@ -602,7 +603,7 @@ async function pruebaImg (req, res, databaseConnection) {
 async function filterCampaigns(req, res, databaseConnection) {
   try {
     const body = req.body;
-
+    const campaign = body.campaign;
     const token = body.token;
 
     const config = {
@@ -634,7 +635,7 @@ async function filterCampaigns(req, res, databaseConnection) {
       const campaignsCollection = databaseConnection
         .db("adpolygon")
         .collection("campaigns");
-      
+
       const campaignFilter = await campaignsCollection.find({
         $and: [
           { "rules.language": { $eq: language } },
@@ -643,23 +644,77 @@ async function filterCampaigns(req, res, databaseConnection) {
               { "rules.gender": { $eq: gender } },
               { "rules.gender": "Both" },
             ],
-          }, { $and: [ { "rules.ageMax": {$gte: ageP}}, { "rules.ageMin": {$lte:ageP}} ]},
-          
+          },
+          {
+            $and: [
+              { "rules.ageMax": { $gte: ageP } },
+              { "rules.ageMin": { $lte: ageP } },
+            ],
+          },
+
           { $or: [{ state: "In Progress" }, { state: "Created" }] },
         ],
       });
-console.log(gender)
+      console.log(gender);
       const campañas = await campaignFilter.toArray();
 
       res.status(200).json({
         message: "Campaign filter",
         success: true,
-        campañas
+        campañas,
       });
-
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
+  }
+}
+
+async function favoriteCampaigns(req, res, databaseConnection) {
+  try {
+    const body = req.body;
+    const token = body.token;
+    const nameCampaign = body.nameCampaign;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const advertiser = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+    const userInfo = await usersCollection.findOne({ username: advertiser });
+    const favoritesLength = userInfo.favorites.length;
+
+    if (userInfo) {
+      const campaignsCollection = databaseConnection
+        .db("adpolygon")
+        .collection("campaigns");
+      const campaignInfo = await campaignsCollection.findOne({
+        name: nameCampaign,
+      });
+      if (campaignInfo) {
+        usersCollection.updateOne(
+          { username: advertiser },
+          { $set: { [`favorites.${favoritesLength}`]: campaignInfo } }
+        );
+        res.status(200).json({
+          message: "Add campaign to favorite",
+          success: true,
+        });
+      }
+    }
+  } catch (error) {
+    console.log(error);
   }
 }
 module.exports = {
@@ -673,4 +728,5 @@ module.exports = {
   updateCampaigns: updateCampaigns,
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
+  favoriteCampaigns: favoriteCampaigns,
 };

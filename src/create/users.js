@@ -26,7 +26,7 @@ async function runUser(req, res, databaseConnection) {
     );
 
     const username = prueba.data.username;
-
+    
     const type = body.type;
     const data = {
       firstName: body.firstName,
@@ -39,11 +39,14 @@ async function runUser(req, res, databaseConnection) {
       youtube: body.youtube,
       twitter: body.twitter,
     };
+    const favorites= []
+
 
     const user = {
       username: username,
       type: type,
       data: data,
+      favorites: favorites
     };
 
     const usersCollection = databaseConnection
