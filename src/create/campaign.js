@@ -54,8 +54,8 @@ async function run(req, res, databaseConnection) {
       URL_objetivo: body.URL_objetivo,
     };
     const rules = {
-      ageMin: body.ageMin,
-      ageMax: body.ageMax,
+      ageMin: parseInt(body.ageMin),
+      ageMax: parseInt(body.ageMax),
       gender: body.gender,
       language: body.language,
       speech: body.speech,
@@ -361,7 +361,11 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     date = new Date();
     console.log(date);
 
-    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date }, state:{$ne:'Finished'} };
+    const filterOne = {
+      startDate: { $lte: date },
+      endDate: { $gte: date },
+      state: { $ne: "Finished" },
+    };
     const setStateOne = {
       $set: {
         state: "In Progress",
@@ -433,7 +437,11 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     date = new Date();
     console.log(date);
 
-    const filterOne = { startDate: { $lte: date }, endDate: { $gte: date }, state:{$ne:'Finished'} };
+    const filterOne = {
+      startDate: { $lte: date },
+      endDate: { $gte: date },
+      state: { $ne: "Finished" },
+    };
     const setStateOne = {
       $set: {
         state: "In Progress",
@@ -527,10 +535,10 @@ async function allCampaigns(req, res, databaseConnection) {
     console.log(error);
   }
 }
-async function cancelCampaing (req, res, databaseConnection){
-  try{
+async function cancelCampaing(req, res, databaseConnection) {
+  try {
     const token = req.body.token;
-  
+
     const config = {
       headers: { Authorization: `Bearer ${token}` },
     };
@@ -545,7 +553,7 @@ async function cancelCampaing (req, res, databaseConnection){
 
     const advertiser = prueba.data.username;
     const id = ObjectId(req.body.id);
-      
+
     const campaignsCollection = databaseConnection
       .db("adpolygon")
       .collection("campaigns");
@@ -555,7 +563,7 @@ async function cancelCampaing (req, res, databaseConnection){
     const filter = { _id: id };
     const setStateCampaign = {
       $set: {
-        state: "Finished"
+        state: "Finished",
       },
     };
 
@@ -565,10 +573,9 @@ async function cancelCampaing (req, res, databaseConnection){
     );
     res.status(200).json({
       message: "Campaign Finished",
-      success: true
-    })
-
-  }catch (error) {
+      success: true,
+    });
+  } catch (error) {
     console.log(error);
   }
 }
@@ -592,6 +599,69 @@ async function pruebaImg (req, res, databaseConnection) {
 }
 */
 
+async function filterCampaigns(req, res, databaseConnection) {
+  try {
+    const body = req.body;
+
+    const token = body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const username = prueba.data.username;
+
+    if (username) {
+      const userCollection = databaseConnection
+        .db("adpolygon")
+        .collection("users");
+
+      const user = await userCollection.findOne({ username: username });
+
+      const { age, language, gender } = user.data;
+      const ageP = parseInt(age);
+
+      console.log(ageP);
+
+      const campaignsCollection = databaseConnection
+        .db("adpolygon")
+        .collection("campaigns");
+      
+      const campaignFilter = await campaignsCollection.find({
+        $and: [
+          { "rules.language": { $eq: language } },
+          {
+            $or: [
+              { "rules.gender": { $eq: gender } },
+              { "rules.gender": "Both" },
+            ],
+          }, { $and: [ { "rules.ageMax": {$gte: ageP}}, { "rules.ageMin": {$lte:ageP}} ]},
+          
+          { $or: [{ state: "In Progress" }, { state: "Created" }] },
+        ],
+      });
+console.log(gender)
+      const campañas = await campaignFilter.toArray();
+
+      res.status(200).json({
+        message: "Campaign filter",
+        success: true,
+        campañas
+      });
+
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
 module.exports = {
   //pruebaImg: pruebaImg,
   run: run,
@@ -602,4 +672,5 @@ module.exports = {
   advertiserSpecificCampaign: advertiserSpecificCampaign,
   updateCampaigns: updateCampaigns,
   cancelCampaing: cancelCampaing,
+  filterCampaigns: filterCampaigns,
 };
