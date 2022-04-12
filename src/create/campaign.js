@@ -766,6 +766,78 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
   }
 }
 
+async function specificCampaign(req, res, databaseConnection) {
+  try {
+    const token = req.body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const advertiser = prueba.data.username;
+    const _id = req.body.id;
+
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+
+    date = new Date();
+    console.log(date);
+
+    const filterOne = {
+      startDate: { $lte: date },
+      endDate: { $gte: date },
+      state: { $ne: "Finished" },
+    };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    const resultOne = await campaignsCollection.updateMany(
+      filterOne,
+      setStateOne
+    );
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finished",
+      },
+    };
+    const resultTwo = await campaignsCollection.updateMany(
+      filterTwo,
+      setStateTwo
+    );
+
+    const campaign = await campaignsCollection.findOne({ _id: ObjectId(_id) });
+
+    if (campaign && advertiser) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: campaign,
+      });
+    } else {
+      return res.status(400).json({
+        success: true,
+        message: "Something wen't wrong, information not available.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
   //pruebaImg: pruebaImg,
   run: run,
@@ -778,5 +850,6 @@ module.exports = {
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
   favoriteCampaigns: favoriteCampaigns,
-  favoriteCampaignsList:favoriteCampaignsList
+  favoriteCampaignsList:favoriteCampaignsList,
+  specificCampaign: specificCampaign
 };
