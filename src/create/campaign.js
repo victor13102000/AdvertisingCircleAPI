@@ -61,7 +61,7 @@ async function run(req, res, databaseConnection) {
       speech: body.speech,
     };
     const imgUrl = body.img;
-
+    
     /*
     const headers = {}
     const formData = {
@@ -88,7 +88,6 @@ async function run(req, res, databaseConnection) {
         endDate: new Date(endDate),
         rules: rules,
         objectives: objetives,
-        favorites: favorites,
       };
 
       const campaignsCollection = databaseConnection
