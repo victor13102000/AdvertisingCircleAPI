@@ -755,6 +755,107 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
     console.log(error)
   }
 }
+async function publisherSpecificSearch(req, res, databaseConnection) {
+  try {
+    const advertiserSearch = req.body.advertiserSearchFor;
+    const nameSearch = req.body.nameSearchFor;
+    const token = req.body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const user = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    const query = { username: user };
+    const data = await usersCollection.findOne(query);
+
+    const userLanguage = data.data.language;
+    const userGender = data.data.gender;
+    const userAge = parseInt(data.data.age);
+
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+
+    date = new Date();
+
+    const filterOne = {
+      startDate: { $lte: date },
+      endDate: { $gte: date },
+      state: { $ne: "Finished" },
+    };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    await campaignsCollection.updateMany(filterOne, setStateOne);
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finished",
+      },
+    };
+    await campaignsCollection.updateMany(filterTwo, setStateTwo);
+
+    const queryUser = {
+      $and: [
+        { "rules.language": { $eq: userLanguage } },
+        {
+          $or: [
+            { "rules.gender": { $eq: userGender } },
+            { "rules.gender": "Both" },
+          ],
+        },
+        {
+          $and: [
+            { "rules.ageMax": { $gte: userAge } },
+            { "rules.ageMin": { $lte: userAge } },
+          ],
+        },
+
+        { $or: [{ state: "In Progress" }, { state: "Created" }] },
+        {
+          $or: [
+            { advertiser: { $regex: `.*${advertiserSearch}`, $options: "i" } },
+            { name: { $regex: `.*${nameSearch}`, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    const allSearch = await campaignsCollection.find(queryUser).toArray();
+    if (allSearch[0]) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: allSearch,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "No campaign has been uploaded yet.",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
 
 module.exports = {
   run: run,
