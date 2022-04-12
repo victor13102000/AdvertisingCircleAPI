@@ -756,8 +756,9 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
   }
 }
 async function publisherSpecificSearch(req, res, databaseConnection) {
+  
   try {
-    const advertiserSearch = req.body.advertiserSearchFor;
+    const advertiserSearch = req.body.nameSearchFor;
     const nameSearch = req.body.nameSearchFor;
     const token = req.body.token;
 
@@ -868,5 +869,6 @@ module.exports = {
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
   favoriteCampaigns: favoriteCampaigns,
-  favoriteCampaignsList:favoriteCampaignsList
+  favoriteCampaignsList:favoriteCampaignsList,
+  publisherSpecificSearch: publisherSpecificSearch
 };
