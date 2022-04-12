@@ -11,7 +11,7 @@ const routes = require('./Routes')
     const databaseConnection = await database.getConnection(
       global.config.database.url
     );
-  app.use(express.json());
+  app.use(express.json({limit: '100mb'}));
   app.use(
     cors({
       origin: "*",

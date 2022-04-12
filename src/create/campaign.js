@@ -1,6 +1,5 @@
 const axios = require("axios");
 const https = require("https");
-global.config = require("../../config.json");
 
 axios.default.httpsAgent = new https.Agent({
   rejectUnauthorized: false,
@@ -61,18 +60,6 @@ async function run(req, res, databaseConnection) {
       speech: body.speech,
     };
     const imgUrl = body.img;
-
-    /*
-    const headers = {}
-    const formData = {
-        'image': imgUrl
-    }
-
-    axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
-    .then(res => console.log(res))
-    .catch(err => console.log(err))
-
-    */
 
     // URL campaign
     if (type == "URL") {
@@ -285,7 +272,7 @@ async function updateCampaigns(req, res, databaseConnection) {
       language: body.language,
       speech: body.speech,
     };
-    const imgUrl = body.img;
+    const imgUrl = body.imgUrl;
     const state = body.state || "Created";
 
     console.log(name);
@@ -359,7 +346,6 @@ async function advertiserCampaigns(req, res, databaseConnection) {
       .collection("campaigns");
 
     date = new Date();
-    console.log(date);
 
     const filterOne = { startDate: { $lte: date }, endDate: { $gte: date }, state:{$ne:'Finished'} };
     const setStateOne = {
@@ -391,6 +377,19 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     const campañas = await allCampaigns.toArray();
 
     if (campañas[0]) {
+
+      campañas.forEach(campaña => {
+      let fechaInicio = campaña.startDate.toISOString()
+      let fechaFinal = campaña.endDate.toISOString()
+
+      fechaInicio = fechaInicio.replace(/-/g, '\/').replace(/T.+/, '');
+      fechaFinal = fechaFinal.replace(/-/g, '\/').replace(/T.+/, '');
+
+      campaña.startDate = fechaInicio
+      campaña.endDate = fechaFinal
+      });
+
+
       return res.status(200).json({
         success: true,
         message: "Campaigns Ok.",
@@ -459,6 +458,16 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     const campaign = await campaignsCollection.findOne({ _id: ObjectId(_id) });
 
     if (campaign && campaign.advertiser === advertiser) {
+
+        let fechaInicio = campaign.startDate.toISOString()
+        let fechaFinal = campaign.endDate.toISOString()
+  
+        fechaInicio = fechaInicio.replace(/-/g, '\/').replace(/T.+/, '');
+        fechaFinal = fechaFinal.replace(/-/g, '\/').replace(/T.+/, '');
+  
+        campaign.startDate = fechaInicio
+        campaign.endDate = fechaFinal
+
       return res.status(200).json({
         success: true,
         message: "Campaigns Ok.",
@@ -572,28 +581,9 @@ async function cancelCampaing (req, res, databaseConnection){
     console.log(error);
   }
 }
-/*
-async function pruebaImg (req, res, databaseConnection) {
-    try {
-        const imgUrl = req.body.img
 
-        const headers = {}
-        const formData = {
-            'image': imgUrl
-        }
-    
-        axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
-
-    } catch(error){
-
-    }
-}
-*/
 
 module.exports = {
-  //pruebaImg: pruebaImg,
   run: run,
   deleteCampaign: deleteCampaign,
   deleteAllCampaigns: deleteAllCampaigns,
