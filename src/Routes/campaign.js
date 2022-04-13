@@ -48,11 +48,22 @@ global.config = require("../../config.json");
   campaign.post("/addtofavorite", (req, res) => {
     createCampaign.favoriteCampaigns(req, res, databaseConnection);
   });
+
+  campaign.put("/removeFromFavorite", (req, res) => {
+    createCampaign.favoriteCampaignsRemove(req, res, databaseConnection);
+  });
+
   campaign.post("/listtofavorite", (req, res) => {
     createCampaign.favoriteCampaignsList(req, res, databaseConnection);
   });
+
   campaign.post("/specificToPublisher", (req, res) => {
     createCampaign.specificCampaign(req, res, databaseConnection);
   });
+
+  campaign.post("/publisherSpecificSearch", (req, res) => {
+    createCampaign.publisherSpecificSearch(req, res, databaseConnection);
+  })
+
 })();
 module.exports = campaign;

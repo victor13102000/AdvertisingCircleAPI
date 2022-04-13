@@ -1,6 +1,5 @@
 const axios = require("axios");
 const https = require("https");
-global.config = require("../../config.json");
 
 axios.default.httpsAgent = new https.Agent({
   rejectUnauthorized: false,
@@ -62,18 +61,6 @@ async function run(req, res, databaseConnection) {
     };
     const imgUrl = body.img;
 
-    /*
-    const headers = {}
-    const formData = {
-        'image': imgUrl
-    }
-
-    axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
-    .then(res => console.log(res))
-    .catch(err => console.log(err))
-
-    */
-
     // URL campaign
     if (type == "URL") {
       const state = "Created"; // init state
@@ -88,7 +75,6 @@ async function run(req, res, databaseConnection) {
         endDate: new Date(endDate),
         rules: rules,
         objectives: objetives,
-        favorites: favorites,
       };
 
       const campaignsCollection = databaseConnection
@@ -286,7 +272,7 @@ async function updateCampaigns(req, res, databaseConnection) {
       language: body.language,
       speech: body.speech,
     };
-    const imgUrl = body.img;
+    const imgUrl = body.imgUrl;
     const state = body.state || "Created";
 
     console.log(name);
@@ -360,7 +346,6 @@ async function advertiserCampaigns(req, res, databaseConnection) {
       .collection("campaigns");
 
     date = new Date();
-    console.log(date);
 
     const filterOne = {
       startDate: { $lte: date },
@@ -396,6 +381,19 @@ async function advertiserCampaigns(req, res, databaseConnection) {
     const campañas = await allCampaigns.toArray();
 
     if (campañas[0]) {
+
+      campañas.forEach(campaña => {
+      let fechaInicio = campaña.startDate.toISOString()
+      let fechaFinal = campaña.endDate.toISOString()
+
+      fechaInicio = fechaInicio.replace(/-/g, '\/').replace(/T.+/, '');
+      fechaFinal = fechaFinal.replace(/-/g, '\/').replace(/T.+/, '');
+
+      campaña.startDate = fechaInicio
+      campaña.endDate = fechaFinal
+      });
+
+
       return res.status(200).json({
         success: true,
         message: "Campaigns Ok.",
@@ -468,6 +466,16 @@ async function advertiserSpecificCampaign(req, res, databaseConnection) {
     const campaign = await campaignsCollection.findOne({ _id: ObjectId(_id) });
 
     if (campaign && campaign.advertiser === advertiser) {
+
+        let fechaInicio = campaign.startDate.toISOString()
+        let fechaFinal = campaign.endDate.toISOString()
+  
+        fechaInicio = fechaInicio.replace(/-/g, '\/').replace(/T.+/, '');
+        fechaFinal = fechaFinal.replace(/-/g, '\/').replace(/T.+/, '');
+  
+        campaign.startDate = fechaInicio
+        campaign.endDate = fechaFinal
+
       return res.status(200).json({
         success: true,
         message: "Campaigns Ok.",
@@ -580,25 +588,7 @@ async function cancelCampaing(req, res, databaseConnection) {
     console.log(error);
   }
 }
-/*
-async function pruebaImg (req, res, databaseConnection) {
-    try {
-        const imgUrl = req.body.img
 
-        const headers = {}
-        const formData = {
-            'image': imgUrl
-        }
-    
-        axios.post(`https://api.imgbb.com/1/upload?expiration=0&key=${global.config.imgbb.apiKey}`, headers, formData)
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
-
-    } catch(error){
-
-    }
-}
-*/
 
 async function filterCampaigns(req, res, databaseConnection) {
   try {
@@ -672,7 +662,7 @@ async function favoriteCampaigns(req, res, databaseConnection) {
   try {
     const body = req.body;
     const token = body.token;
-    const nameCampaign = body.nameCampaign;
+    const idCampaign = ObjectId(body.id);
 
     const config = {
       headers: { Authorization: `Bearer ${token}` },
@@ -699,14 +689,13 @@ async function favoriteCampaigns(req, res, databaseConnection) {
         .db("adpolygon")
         .collection("campaigns");
       const campaignInfo = await campaignsCollection.findOne({
-        name: nameCampaign,
+        _id: idCampaign,
       });
       if (campaignInfo) {
-        //await usersCollection.find({ favorites: {name: campaignInfo.name } })
-let verificadorRep= false
+        let verificadorRep= false
 
-        let aux= userInfo.favorites.forEach(campaign => {
-          if( campaign.name === campaignInfo.name){
+        userInfo.favorites.forEach(campaign => {
+          if( campaign._id === campaignInfo._id){
             verificadorRep= true
           }
         });
@@ -733,6 +722,54 @@ let verificadorRep= false
   }
 }
 
+
+async function favoriteCampaignsRemove(req, res, databaseConnection) {
+  try {
+    const body = req.body;
+    const token = body.token;
+    const idCampaign = ObjectId(body.id);
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const publisher = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    const userInfo = await usersCollection.updateOne({
+      username: publisher
+    },{ $pull: { favorites: { _id: idCampaign } } }
+    )
+
+    if(userInfo.acknowledged){
+      res.status(200).json({
+        message: "Campaign correctly removed from favorites",
+        success: true,
+      })
+    }else{
+      res.status(404).json({
+        message: "Couldn´t be removed from favorites",
+        success: false,
+
+    })
+  }
+    
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function favoriteCampaignsList(req, res, databaseConnection) {
   try {
     const body = req.body;
@@ -754,15 +791,122 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
     .collection("users");
   const userInfo = await usersCollection.findOne({ username: username });
   const favorites = userInfo.favorites
+  let favoritesId = []
+
+  favorites.forEach(fav => {
+    favoritesId.push(fav._id)
+  });
 
   res.status(200).json({
     message: "List favorite campaign",
     success: true,
-    favorites:favorites
+    favorites:favoritesId
   });
 
   } catch (error) {
     console.log(error)
+  }
+}
+async function publisherSpecificSearch(req, res, databaseConnection) {
+  
+  try {
+    const advertiserSearch = req.body.nameSearchFor;
+    const nameSearch = req.body.nameSearchFor;
+    const token = req.body.token;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const user = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    const query = { username: user };
+    const data = await usersCollection.findOne(query);
+
+    const userLanguage = data.data.language;
+    const userGender = data.data.gender;
+    const userAge = parseInt(data.data.age);
+
+    const campaignsCollection = databaseConnection
+      .db("adpolygon")
+      .collection("campaigns");
+
+    date = new Date();
+
+    const filterOne = {
+      startDate: { $lte: date },
+      endDate: { $gte: date },
+      state: { $ne: "Finished" },
+    };
+    const setStateOne = {
+      $set: {
+        state: "In Progress",
+      },
+    };
+
+    await campaignsCollection.updateMany(filterOne, setStateOne);
+
+    const filterTwo = { endDate: { $lt: date } };
+    const setStateTwo = {
+      $set: {
+        state: "Finished",
+      },
+    };
+    await campaignsCollection.updateMany(filterTwo, setStateTwo);
+
+    const queryUser = {
+      $and: [
+        { "rules.language": { $eq: userLanguage } },
+        {
+          $or: [
+            { "rules.gender": { $eq: userGender } },
+            { "rules.gender": "Both" },
+          ],
+        },
+        {
+          $and: [
+            { "rules.ageMax": { $gte: userAge } },
+            { "rules.ageMin": { $lte: userAge } },
+          ],
+        },
+
+        { $or: [{ state: "In Progress" }, { state: "Created" }] },
+        {
+          $or: [
+            { advertiser: { $regex: `.*${advertiserSearch}`, $options: "i" } },
+            { name: { $regex: `.*${nameSearch}`, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    const allSearch = await campaignsCollection.find(queryUser).toArray();
+    if (allSearch[0]) {
+      return res.status(200).json({
+        success: true,
+        message: "Campaigns Ok.",
+        campaigns: allSearch,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "No campaign has been uploaded yet.",
+      });
+    }
+  } catch (err) {
+    console.log(err);
   }
 }
 
@@ -839,7 +983,6 @@ async function specificCampaign(req, res, databaseConnection) {
 }
 
 module.exports = {
-  //pruebaImg: pruebaImg,
   run: run,
   deleteCampaign: deleteCampaign,
   deleteAllCampaigns: deleteAllCampaigns,
@@ -850,6 +993,10 @@ module.exports = {
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
   favoriteCampaigns: favoriteCampaigns,
+
+  specificCampaign: specificCampaign,
+  favoriteCampaignsRemove: favoriteCampaignsRemove,
   favoriteCampaignsList:favoriteCampaignsList,
-  specificCampaign: specificCampaign
+  publisherSpecificSearch: publisherSpecificSearch
+
 };
