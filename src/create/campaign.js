@@ -662,7 +662,7 @@ async function favoriteCampaigns(req, res, databaseConnection) {
   try {
     const body = req.body;
     const token = body.token;
-    const nameCampaign = body.nameCampaign;
+    const idCampaign = ObjectId(body.id);
 
     const config = {
       headers: { Authorization: `Bearer ${token}` },
@@ -689,14 +689,13 @@ async function favoriteCampaigns(req, res, databaseConnection) {
         .db("adpolygon")
         .collection("campaigns");
       const campaignInfo = await campaignsCollection.findOne({
-        name: nameCampaign,
+        _id: idCampaign,
       });
       if (campaignInfo) {
-        //await usersCollection.find({ favorites: {name: campaignInfo.name } })
-let verificadorRep= false
+        let verificadorRep= false
 
-        let aux= userInfo.favorites.forEach(campaign => {
-          if( campaign.name === campaignInfo.name){
+        userInfo.favorites.forEach(campaign => {
+          if( campaign._id === campaignInfo._id){
             verificadorRep= true
           }
         });
@@ -723,6 +722,54 @@ let verificadorRep= false
   }
 }
 
+
+async function favoriteCampaignsRemove(req, res, databaseConnection) {
+  try {
+    const body = req.body;
+    const token = body.token;
+    const idCampaign = ObjectId(body.id);
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+    const bodyParameters = {
+      "Content-Type": "application/json",
+    };
+    const prueba = await axios.post(
+      "https://accounts.clusterby.com/auth",
+      bodyParameters,
+      config
+    );
+
+    const publisher = prueba.data.username;
+
+    const usersCollection = databaseConnection
+      .db("adpolygon")
+      .collection("users");
+
+    const userInfo = await usersCollection.updateOne({
+      username: publisher
+    },{ $pull: { favorites: { _id: idCampaign } } }
+    )
+
+    if(userInfo.acknowledged){
+      res.status(200).json({
+        message: "Campaign correctly removed from favorites",
+        success: true,
+      })
+    }else{
+      res.status(404).json({
+        message: "Couldn´t be removed from favorites",
+        success: false,
+
+    })
+  }
+    
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function favoriteCampaignsList(req, res, databaseConnection) {
   try {
     const body = req.body;
@@ -744,11 +791,16 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
     .collection("users");
   const userInfo = await usersCollection.findOne({ username: username });
   const favorites = userInfo.favorites
+  let favoritesId = []
+
+  favorites.forEach(fav => {
+    favoritesId.push(fav._id)
+  });
 
   res.status(200).json({
     message: "List favorite campaign",
     success: true,
-    favorites:favorites
+    favorites:favoritesId
   });
 
   } catch (error) {
@@ -869,6 +921,7 @@ module.exports = {
   cancelCampaing: cancelCampaing,
   filterCampaigns: filterCampaigns,
   favoriteCampaigns: favoriteCampaigns,
+  favoriteCampaignsRemove: favoriteCampaignsRemove,
   favoriteCampaignsList:favoriteCampaignsList,
   publisherSpecificSearch: publisherSpecificSearch
 };
