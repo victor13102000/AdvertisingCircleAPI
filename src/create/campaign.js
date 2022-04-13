@@ -647,6 +647,19 @@ async function filterCampaigns(req, res, databaseConnection) {
   
       const campañas = await campaignFilter.toArray();
 
+      
+      campañas.forEach(campaña => {
+        let fechaInicio = campaña.startDate.toISOString()
+        let fechaFinal = campaña.endDate.toISOString()
+  
+        fechaInicio = fechaInicio.replace(/-/g, '\/').replace(/T.+/, '');
+        fechaFinal = fechaFinal.replace(/-/g, '\/').replace(/T.+/, '');
+  
+        campaña.startDate = fechaInicio
+        campaña.endDate = fechaFinal
+      })
+      
+
       res.status(200).json({
         message: "Campaign filter",
         success: true,
