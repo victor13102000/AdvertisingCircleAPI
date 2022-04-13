@@ -691,12 +691,14 @@ async function favoriteCampaigns(req, res, databaseConnection) {
       const campaignInfo = await campaignsCollection.findOne({
         _id: idCampaign,
       });
+
       if (campaignInfo) {
         let verificadorRep= false
-
+        
         userInfo.favorites.forEach(campaign => {
-          if( campaign._id === campaignInfo._id){
+          if( campaign._id.toString() === campaignInfo._id.toString()){
             verificadorRep= true
+            
           }
         });
 
