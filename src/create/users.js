@@ -242,35 +242,35 @@ async function userInfo(req, res, databaseConnection){
       .db("adpolygon")
       .collection("users");
     const info = await usersCollection.findOne({ username: username });
-      if(info.data.firstName === null ||info.data.firstName === ""){
+      if(info.data.firstName === null){
         res.status(404).json({
           success: false,
           message: "undefined firstName",
-      })}else if(info.data.lastName === null || info.data.lastName === ""){
+      })}else if(info.data.lastName === null ){
         res.status(404).json({
           success: false,
           message: "undefined lastName",
-      })}else if(info.data.language === null || info.data.language === ""){
+      })}else if(info.data.language === null || info.data.language === "Choose..."){
         res.status(404).json({
           success: false,
           message: "undefined language",
-      })}else if(info.data.gender === null || info.data.gender === ""){
+      })}else if(info.data.gender === null){
         res.status(404).json({
           success: false,
           message: "undefined gender",
-      })}else if(info.data.age === null || info.data.age === ""){
+      })}else if(info.data.age === null){
         res.status(404).json({
           success: false,
           message: "undefined age",
-      })}else if(info.data.instagram === null || info.data.instagram === ""){
+      })}else if(info.data.instagram === null){
         res.status(404).json({
           success: false,
           message: "undefined instagram",
-      })}else if(info.data.tikTok === null || info.data.tikTok === ""){
+      })}else if(info.data.tikTok === null){
         res.status(404).json({
           success: false,
           message: "undefined tikTok",
-      })}else if(info.data.twitter === null || info.data.twitter === ""){
+      })}else if(info.data.twitter === null){
         res.status(404).json({
           success: false,
           message: "undefined twitter",
