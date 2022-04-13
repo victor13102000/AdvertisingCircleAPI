@@ -793,16 +793,14 @@ async function favoriteCampaignsList(req, res, databaseConnection) {
     .collection("users");
   const userInfo = await usersCollection.findOne({ username: username });
   const favorites = userInfo.favorites
-  let favoritesId = []
+ 
 
-  favorites.forEach(fav => {
-    favoritesId.push(fav._id)
-  });
+
 
   res.status(200).json({
     message: "List favorite campaign",
     success: true,
-    favorites:favoritesId
+    favorites:favorites
   });
 
   } catch (error) {
