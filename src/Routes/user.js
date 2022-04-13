@@ -1,4 +1,5 @@
 const express = require("express");
+const { userInfo } = require("os");
 const users = express.Router();
 const createUser = require("../create/users");
 const database = require("../database.js");
@@ -24,6 +25,9 @@ global.config = require("../../config.json");
   users.post("/data", (req, res) => {
     createUser.dataUser(req, res, databaseConnection);
   });
+  users.post("/userInfo", (req, res) => {
+    createUser.userInfo(req, res, databaseConnection)
+  })
 
 })();
 
